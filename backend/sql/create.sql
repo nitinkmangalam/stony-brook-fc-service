@@ -50,7 +50,7 @@ CREATE INDEX idx_matches_date ON matches(match_date);
 CREATE INDEX idx_matches_round ON matches(round);
 CREATE INDEX idx_match_stats_player ON match_stats(player_id);
 
--- Function to update timestamps
+-- Function to update timestamp
 CREATE OR REPLACE FUNCTION update_timestamp()
 RETURNS TRIGGER AS $$
 BEGIN
