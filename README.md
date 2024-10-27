@@ -1,4 +1,4 @@
-# FIFA Tournament Service
+# Stony Brook FC Service
 
 The backend service for managing FIFA tournament matches (1v1 and 2v2 matches) and tracking player & match statistics.
 
