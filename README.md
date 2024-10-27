@@ -38,7 +38,7 @@ CREATE DATABASE fifa_tournament;
 4. Run the server:
 ```bash
 cd app
-uvicorn main:app --reload
+python main.py
 ```
 
 ### Frontend Setup
