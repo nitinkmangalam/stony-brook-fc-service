@@ -1,6 +1,6 @@
-# FIFA Tournament Platform
+# FIFA Tournament Service
 
-A web application for managing FIFA tournament matches and tracking player statistics.
+The backend service for managing FIFA tournament matches (1v1 and 2v2 matches) and tracking player & match statistics.
 
 ## Project Structure
 
