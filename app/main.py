@@ -1,12 +1,13 @@
-from datetime import datetime
+# from datetime import datetime
 
-import psycopg2
+# import psycopg2
 from database import get_connection
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from models import MatchCreate, Player, PlayerCreate, ScoreUpdate
+
+# from models import MatchCreate, Player, PlayerCreate, ScoreUpdate
 from psycopg2.extras import RealDictCursor
-from routers import player_router
+from routers import match_router, player_router
 
 app = FastAPI()
 
@@ -21,6 +22,7 @@ app.add_middleware(
 
 # Include routers
 app.include_router(player_router.router)
+app.include_router(match_router.router)
 
 # # Player endpoints
 # @app.get("/players", response_model=List[Player])
@@ -36,353 +38,353 @@ app.include_router(player_router.router)
 #         conn.close()
 
 
-@app.post("/players", response_model=Player)
-async def create_player(player: PlayerCreate):
-    conn = get_connection()
-    cur = conn.cursor(cursor_factory=RealDictCursor)
-    try:
-        cur.execute(
-            """
-            INSERT INTO players (player_name)
-            VALUES (%s)
-            RETURNING *
-            """,
-            (player.player_name,),
-        )
-        new_player = cur.fetchone()
-        conn.commit()
-        return new_player
-    except Exception as e:
-        conn.rollback()
-        raise HTTPException(status_code=400, detail=str(e))
-    finally:
-        cur.close()
-        conn.close()
+# @app.post("/players", response_model=Player)
+# async def create_player(player: PlayerCreate):
+#     conn = get_connection()
+#     cur = conn.cursor(cursor_factory=RealDictCursor)
+#     try:
+#         cur.execute(
+#             """
+#             INSERT INTO players (player_name)
+#             VALUES (%s)
+#             RETURNING *
+#             """,
+#             (player.player_name,),
+#         )
+#         new_player = cur.fetchone()
+#         conn.commit()
+#         return new_player
+#     except Exception as e:
+#         conn.rollback()
+#         raise HTTPException(status_code=400, detail=str(e))
+#     finally:
+#         cur.close()
+#         conn.close()
 
 
 # Match endpoints
-@app.get("/matches")
-async def get_matches():
-    try:
-        conn = get_connection()
-        cur = conn.cursor(cursor_factory=RealDictCursor)
-        try:
-            cur.execute(
-                """
-                SELECT
-                m.*, p1.player_name as team1_player1_name,
-                p2.player_name as team1_player2_name,
-                p3.player_name as team2_player1_name,
-                p4.player_name as team2_player2_name
-                FROM matches m
-                LEFT JOIN players p1 ON m.team1_player1_id = p1.player_id
-                LEFT JOIN players p2 ON m.team1_player2_id = p2.player_id
-                LEFT JOIN players p3 ON m.team2_player1_id = p3.player_id
-                LEFT JOIN players p4 ON m.team2_player2_id = p4.player_id
-                ORDER BY m.match_date DESC
-                """
-            )
-            matches = cur.fetchall()
-            return matches
-        finally:
-            cur.close()
-            conn.close()
-    except Exception as e:
-        print(f"Error in get_matches: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+# @app.get("/matches")
+# async def get_matches():
+#     try:
+#         conn = get_connection()
+#         cur = conn.cursor(cursor_factory=RealDictCursor)
+#         try:
+#             cur.execute(
+#                 """
+#                 SELECT
+#                 m.*, p1.player_name as team1_player1_name,
+#                 p2.player_name as team1_player2_name,
+#                 p3.player_name as team2_player1_name,
+#                 p4.player_name as team2_player2_name
+#                 FROM matches m
+#                 LEFT JOIN players p1 ON m.team1_player1_id = p1.player_id
+#                 LEFT JOIN players p2 ON m.team1_player2_id = p2.player_id
+#                 LEFT JOIN players p3 ON m.team2_player1_id = p3.player_id
+#                 LEFT JOIN players p4 ON m.team2_player2_id = p4.player_id
+#                 ORDER BY m.match_date DESC
+#                 """
+#             )
+#             matches = cur.fetchall()
+#             return matches
+#         finally:
+#             cur.close()
+#             conn.close()
+#     except Exception as e:
+#         print(f"Error in get_matches: {e}")
+#         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.post("/matches")
-async def create_match(match: MatchCreate):
-    try:
-        conn = get_connection()
-        cur = conn.cursor(cursor_factory=RealDictCursor)
-        try:
-            # Validate 2v2 match requirements
-            if match.match_type == "2v2":
-                if not all(
-                    [
-                        match.team1_player1_id,
-                        match.team1_player2_id,
-                        match.team2_player1_id,
-                        match.team2_player2_id,
-                    ]
-                ):
-                    raise HTTPException(
-                        status_code=422,
-                        detail="2v2 matches require all player positions to be filled",
-                    )
+# @app.post("/matches")
+# async def create_match(match: MatchCreate):
+#     try:
+#         conn = get_connection()
+#         cur = conn.cursor(cursor_factory=RealDictCursor)
+#         try:
+#             # Validate 2v2 match requirements
+#             if match.match_type == "2v2":
+#                 if not all(
+#                     [
+#                         match.team1_player1_id,
+#                         match.team1_player2_id,
+#                         match.team2_player1_id,
+#                         match.team2_player2_id,
+#                     ]
+#                 ):
+#                     raise HTTPException(
+#                         status_code=422,
+#                         detail="2v2 matches require all player positions to be filled",
+#                     )
 
-                # Check if same player is selected multiple times
-                players = [
-                    match.team1_player1_id,
-                    match.team1_player2_id,
-                    match.team2_player1_id,
-                    match.team2_player2_id,
-                ]
-                if len(set(players)) != 4:
-                    raise HTTPException(
-                        status_code=422,
-                        detail="Cannot use the same player multiple times in a match",
-                    )
+#                 # Check if same player is selected multiple times
+#                 players = [
+#                     match.team1_player1_id,
+#                     match.team1_player2_id,
+#                     match.team2_player1_id,
+#                     match.team2_player2_id,
+#                 ]
+#                 if len(set(players)) != 4:
+#                     raise HTTPException(
+#                         status_code=422,
+#                         detail="Cannot use the same player multiple times in a match",
+#                     )
 
-            # For 1v1 matches, ensure second player slots are null
-            if match.match_type == "1v1":
-                if match.team1_player2_id is not None or match.team2_player2_id is not None:
-                    raise HTTPException(status_code=422, detail="1v1 matches should not have secondary players")
-                match.team1_player2_id = None
-                match.team2_player2_id = None
+#             # For 1v1 matches, ensure second player slots are null
+#             if match.match_type == "1v1":
+#                 if match.team1_player2_id is not None or match.team2_player2_id is not None:
+#                     raise HTTPException(status_code=422, detail="1v1 matches should not have secondary players")
+#                 match.team1_player2_id = None
+#                 match.team2_player2_id = None
 
-            # Validate players exist in database
-            player_ids = [match.team1_player1_id, match.team2_player1_id]
-            if match.match_type == "2v2":
-                player_ids.extend([match.team1_player2_id, match.team2_player2_id])
+#             # Validate players exist in database
+#             player_ids = [match.team1_player1_id, match.team2_player1_id]
+#             if match.match_type == "2v2":
+#                 player_ids.extend([match.team1_player2_id, match.team2_player2_id])
 
-            cur.execute("SELECT player_id FROM players WHERE player_id = ANY(%s)", (player_ids,))
-            found_players = cur.fetchall()
-            if len(found_players) != len(set(player_ids)):
-                raise HTTPException(status_code=422, detail="One or more players not found in database")
+#             cur.execute("SELECT player_id FROM players WHERE player_id = ANY(%s)", (player_ids,))
+#             found_players = cur.fetchall()
+#             if len(found_players) != len(set(player_ids)):
+#                 raise HTTPException(status_code=422, detail="One or more players not found in database")
 
-            # Set scheduled_date to match_date if not provided
-            scheduled_date = match.scheduled_date or match.match_date
+#             # Set scheduled_date to match_date if not provided
+#             scheduled_date = match.scheduled_date or match.match_date
 
-            # Validate scores for completed matches
-            status = "COMPLETED" if match.team1_goals is not None and match.team2_goals is not None else "SCHEDULED"
-            if status == "COMPLETED":
-                if match.team1_goals < 0 or match.team2_goals < 0:
-                    raise HTTPException(status_code=422, detail="Goals cannot be negative")
-            elif status == "SCHEDULED":
-                # Ensure goals are null for scheduled matches
-                match.team1_goals = None
-                match.team2_goals = None
+#             # Validate scores for completed matches
+#             status = "COMPLETED" if match.team1_goals is not None and match.team2_goals is not None else "SCHEDULED"
+#             if status == "COMPLETED":
+#                 if match.team1_goals < 0 or match.team2_goals < 0:
+#                     raise HTTPException(status_code=422, detail="Goals cannot be negative")
+#             elif status == "SCHEDULED":
+#                 # Ensure goals are null for scheduled matches
+#                 match.team1_goals = None
+#                 match.team2_goals = None
 
-            # Calculate result for completed matches
-            result = None
-            if status == "COMPLETED":
-                if match.team1_goals > match.team2_goals:
-                    result = "Team1"
-                elif match.team2_goals > match.team1_goals:
-                    result = "Team2"
-                else:
-                    result = "Draw"
+#             # Calculate result for completed matches
+#             result = None
+#             if status == "COMPLETED":
+#                 if match.team1_goals > match.team2_goals:
+#                     result = "Team1"
+#                 elif match.team2_goals > match.team1_goals:
+#                     result = "Team2"
+#                 else:
+#                     result = "Draw"
 
-            # Validate match date
-            if match.match_date < datetime.now() and status == "SCHEDULED":
-                raise HTTPException(status_code=422, detail="Scheduled matches cannot be in the past")
+#             # Validate match date
+#             if match.match_date < datetime.now() and status == "SCHEDULED":
+#                 raise HTTPException(status_code=422, detail="Scheduled matches cannot be in the past")
 
-            # Insert match
-            cur.execute(
-                """
-                INSERT INTO matches (
-                    round, match_type,
-                    team1_player1_id, team1_player2_id,
-                    team2_player1_id, team2_player2_id,
-                    match_date, scheduled_date,
-                    team1_goals, team2_goals,
-                    status, result
-                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-                RETURNING *
-            """,
-                (
-                    match.round,
-                    match.match_type,
-                    match.team1_player1_id,
-                    match.team1_player2_id,
-                    match.team2_player1_id,
-                    match.team2_player2_id,
-                    match.match_date,
-                    scheduled_date,
-                    match.team1_goals,
-                    match.team2_goals,
-                    status,
-                    result,
-                ),
-            )
-            new_match = cur.fetchone()
+#             # Insert match
+#             cur.execute(
+#                 """
+#                 INSERT INTO matches (
+#                     round, match_type,
+#                     team1_player1_id, team1_player2_id,
+#                     team2_player1_id, team2_player2_id,
+#                     match_date, scheduled_date,
+#                     team1_goals, team2_goals,
+#                     status, result
+#                 ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+#                 RETURNING *
+#             """,
+#                 (
+#                     match.round,
+#                     match.match_type,
+#                     match.team1_player1_id,
+#                     match.team1_player2_id,
+#                     match.team2_player1_id,
+#                     match.team2_player2_id,
+#                     match.match_date,
+#                     scheduled_date,
+#                     match.team1_goals,
+#                     match.team2_goals,
+#                     status,
+#                     result,
+#                 ),
+#             )
+#             new_match = cur.fetchone()
 
-            # If match is completed, player stats will be updated by the trigger
-            conn.commit()
-            return new_match
-        except psycopg2.Error as e:
-            conn.rollback()
-            print(f"Database error in create_match: {e}")
-            raise HTTPException(status_code=400, detail=str(e))
-        finally:
-            cur.close()
-            conn.close()
-    except Exception as e:
-        print(f"Error in create_match: {e}")
-        raise HTTPException(status_code=400, detail=str(e))
-
-
-@app.put("/matches/{match_id}")
-async def update_match(match_id: int, match: MatchCreate):
-    print(f"Received update request for match {match_id}")
-    print(f"Request data: {match.dict()}")
-    try:
-        conn = get_connection()
-        cur = conn.cursor(cursor_factory=RealDictCursor)
-        try:
-            # Check if match exists and get current data
-            cur.execute("SELECT * FROM matches WHERE id = %s", (match_id,))
-            existing_match = cur.fetchone()
-            if not existing_match:
-                raise HTTPException(status_code=404, detail="Match not found")
-
-            print(f"Existing match data: {existing_match}")
-
-            # If both goals are provided in the update, use them
-            # If only one goal is provided, consider it invalid
-            if match.team1_goals is not None and match.team2_goals is not None:
-                status = "COMPLETED"
-                team1_goals = match.team1_goals
-                team2_goals = match.team2_goals
-                if team1_goals > team2_goals:
-                    result = "Team1"
-                elif team2_goals > team1_goals:
-                    result = "Team2"
-                else:
-                    result = "Draw"
-            # If no goals are provided, keep existing goals or null
-            else:
-                status = "SCHEDULED"
-                team1_goals = None
-                team2_goals = None
-                result = None
-
-            print(f"Status: {status}, Result: {result}, Goals: {team1_goals}-{team2_goals}")
-
-            # Update match
-            cur.execute(
-                """
-                UPDATE matches
-                SET round = %s,
-                    match_type = %s,
-                    team1_player1_id = %s,
-                    team1_player2_id = %s,
-                    team2_player1_id = %s,
-                    team2_player2_id = %s,
-                    match_date = %s,
-                    team1_goals = %s,
-                    team2_goals = %s,
-                    status = %s,
-                    result = %s,
-                    updated_at = CURRENT_TIMESTAMP
-                WHERE id = %s
-                RETURNING *
-            """,
-                (
-                    match.round,
-                    match.match_type,
-                    match.team1_player1_id,
-                    match.team1_player2_id,
-                    match.team2_player1_id,
-                    match.team2_player2_id,
-                    match.match_date,
-                    team1_goals,
-                    team2_goals,
-                    status,
-                    result,
-                    match_id,
-                ),
-            )
-
-            updated_match = cur.fetchone()
-            if not updated_match:
-                raise HTTPException(status_code=404, detail="Failed to update match")
-
-            conn.commit()
-            print(f"Successfully updated match: {updated_match}")
-            return updated_match
-
-        except Exception as e:
-            conn.rollback()
-            print(f"Database error in update_match: {e}")
-            raise HTTPException(status_code=400, detail=str(e))
-        finally:
-            cur.close()
-            conn.close()
-    except Exception as e:
-        print(f"Error in update_match: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+#             # If match is completed, player stats will be updated by the trigger
+#             conn.commit()
+#             return new_match
+#         except psycopg2.Error as e:
+#             conn.rollback()
+#             print(f"Database error in create_match: {e}")
+#             raise HTTPException(status_code=400, detail=str(e))
+#         finally:
+#             cur.close()
+#             conn.close()
+#     except Exception as e:
+#         print(f"Error in create_match: {e}")
+#         raise HTTPException(status_code=400, detail=str(e))
 
 
-@app.put("/matches/{match_id}/score")
-async def update_match_score(match_id: int, score: ScoreUpdate):
-    try:
-        conn = get_connection()
-        cur = conn.cursor(cursor_factory=RealDictCursor)
-        try:
-            # First get the current match status
-            cur.execute("SELECT status FROM matches WHERE id = %s", (match_id,))
-            current_match = cur.fetchone()
-            if not current_match:
-                raise HTTPException(status_code=404, detail="Match not found")
+# @app.put("/matches/{match_id}")
+# async def update_match(match_id: int, match: MatchCreate):
+#     print(f"Received update request for match {match_id}")
+#     print(f"Request data: {match.dict()}")
+#     try:
+#         conn = get_connection()
+#         cur = conn.cursor(cursor_factory=RealDictCursor)
+#         try:
+#             # Check if match exists and get current data
+#             cur.execute("SELECT * FROM matches WHERE id = %s", (match_id,))
+#             existing_match = cur.fetchone()
+#             if not existing_match:
+#                 raise HTTPException(status_code=404, detail="Match not found")
 
-            # Calculate result based on scores
-            team1_goals = score.team1_goals  # Use direct attribute access instead of .get()
-            team2_goals = score.team2_goals
+#             print(f"Existing match data: {existing_match}")
 
-            if team1_goals > team2_goals:
-                result = "Team1"
-            elif team2_goals > team1_goals:
-                result = "Team2"
-            else:
-                result = "Draw"
+#             # If both goals are provided in the update, use them
+#             # If only one goal is provided, consider it invalid
+#             if match.team1_goals is not None and match.team2_goals is not None:
+#                 status = "COMPLETED"
+#                 team1_goals = match.team1_goals
+#                 team2_goals = match.team2_goals
+#                 if team1_goals > team2_goals:
+#                     result = "Team1"
+#                 elif team2_goals > team1_goals:
+#                     result = "Team2"
+#                 else:
+#                     result = "Draw"
+#             # If no goals are provided, keep existing goals or null
+#             else:
+#                 status = "SCHEDULED"
+#                 team1_goals = None
+#                 team2_goals = None
+#                 result = None
 
-            # Update match
-            cur.execute(
-                """
-                UPDATE matches
-                SET team1_goals = %s,
-                    team2_goals = %s,
-                    status = 'COMPLETED',
-                    result = %s,
-                    updated_at = CURRENT_TIMESTAMP
-                WHERE id = %s
-                RETURNING *
-            """,
-                (team1_goals, team2_goals, result, match_id),
-            )
+#             print(f"Status: {status}, Result: {result}, Goals: {team1_goals}-{team2_goals}")
 
-            updated_match = cur.fetchone()
-            if not updated_match:
-                raise HTTPException(status_code=404, detail="Match not found")
+#             # Update match
+#             cur.execute(
+#                 """
+#                 UPDATE matches
+#                 SET round = %s,
+#                     match_type = %s,
+#                     team1_player1_id = %s,
+#                     team1_player2_id = %s,
+#                     team2_player1_id = %s,
+#                     team2_player2_id = %s,
+#                     match_date = %s,
+#                     team1_goals = %s,
+#                     team2_goals = %s,
+#                     status = %s,
+#                     result = %s,
+#                     updated_at = CURRENT_TIMESTAMP
+#                 WHERE id = %s
+#                 RETURNING *
+#             """,
+#                 (
+#                     match.round,
+#                     match.match_type,
+#                     match.team1_player1_id,
+#                     match.team1_player2_id,
+#                     match.team2_player1_id,
+#                     match.team2_player2_id,
+#                     match.match_date,
+#                     team1_goals,
+#                     team2_goals,
+#                     status,
+#                     result,
+#                     match_id,
+#                 ),
+#             )
 
-            conn.commit()
-            return updated_match
-        finally:
-            cur.close()
-            conn.close()
-    except Exception as e:
-        print(f"Error in update_match_score: {e}")
-        raise HTTPException(status_code=400, detail=str(e))
+#             updated_match = cur.fetchone()
+#             if not updated_match:
+#                 raise HTTPException(status_code=404, detail="Failed to update match")
+
+#             conn.commit()
+#             print(f"Successfully updated match: {updated_match}")
+#             return updated_match
+
+#         except Exception as e:
+#             conn.rollback()
+#             print(f"Database error in update_match: {e}")
+#             raise HTTPException(status_code=400, detail=str(e))
+#         finally:
+#             cur.close()
+#             conn.close()
+#     except Exception as e:
+#         print(f"Error in update_match: {e}")
+#         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.delete("/matches/{match_id}")
-async def delete_match(match_id: int):
-    try:
-        conn = get_connection()
-        cur = conn.cursor(cursor_factory=RealDictCursor)
-        try:
-            # First check if match exists and its status
-            cur.execute("SELECT status FROM matches WHERE id = %s", (match_id,))
-            match = cur.fetchone()
-            if not match:
-                raise HTTPException(status_code=404, detail="Match not found")
+# @app.put("/matches/{match_id}/score")
+# async def update_match_score(match_id: int, score: ScoreUpdate):
+#     try:
+#         conn = get_connection()
+#         cur = conn.cursor(cursor_factory=RealDictCursor)
+#         try:
+#             # First get the current match status
+#             cur.execute("SELECT status FROM matches WHERE id = %s", (match_id,))
+#             current_match = cur.fetchone()
+#             if not current_match:
+#                 raise HTTPException(status_code=404, detail="Match not found")
 
-            # Delete match
-            cur.execute("DELETE FROM matches WHERE id = %s RETURNING *", (match_id,))
-            deleted_match = cur.fetchone()
+#             # Calculate result based on scores
+#             team1_goals = score.team1_goals  # Use direct attribute access instead of .get()
+#             team2_goals = score.team2_goals
 
-            conn.commit()
-            return deleted_match
-        finally:
-            cur.close()
-            conn.close()
-    except Exception as e:
-        print(f"Error in delete_match: {e}")
-        raise HTTPException(status_code=400, detail=str(e))
+#             if team1_goals > team2_goals:
+#                 result = "Team1"
+#             elif team2_goals > team1_goals:
+#                 result = "Team2"
+#             else:
+#                 result = "Draw"
+
+#             # Update match
+#             cur.execute(
+#                 """
+#                 UPDATE matches
+#                 SET team1_goals = %s,
+#                     team2_goals = %s,
+#                     status = 'COMPLETED',
+#                     result = %s,
+#                     updated_at = CURRENT_TIMESTAMP
+#                 WHERE id = %s
+#                 RETURNING *
+#             """,
+#                 (team1_goals, team2_goals, result, match_id),
+#             )
+
+#             updated_match = cur.fetchone()
+#             if not updated_match:
+#                 raise HTTPException(status_code=404, detail="Match not found")
+
+#             conn.commit()
+#             return updated_match
+#         finally:
+#             cur.close()
+#             conn.close()
+#     except Exception as e:
+#         print(f"Error in update_match_score: {e}")
+#         raise HTTPException(status_code=400, detail=str(e))
+
+
+# @app.delete("/matches/{match_id}")
+# async def delete_match(match_id: int):
+#     try:
+#         conn = get_connection()
+#         cur = conn.cursor(cursor_factory=RealDictCursor)
+#         try:
+#             # First check if match exists and its status
+#             cur.execute("SELECT status FROM matches WHERE id = %s", (match_id,))
+#             match = cur.fetchone()
+#             if not match:
+#                 raise HTTPException(status_code=404, detail="Match not found")
+
+#             # Delete match
+#             cur.execute("DELETE FROM matches WHERE id = %s RETURNING *", (match_id,))
+#             deleted_match = cur.fetchone()
+
+#             conn.commit()
+#             return deleted_match
+#         finally:
+#             cur.close()
+#             conn.close()
+#     except Exception as e:
+#         print(f"Error in delete_match: {e}")
+#         raise HTTPException(status_code=400, detail=str(e))
 
 
 @app.get("/standings")

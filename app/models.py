@@ -2,7 +2,7 @@ from datetime import datetime
 from enum import Enum
 from typing import Optional
 
-from pydantic import BaseModel, ConfigDict, field_validator
+from pydantic import BaseModel, ConfigDict, ValidationInfo, field_validator
 
 
 # Enums for validation
@@ -61,11 +61,11 @@ class MatchBase(BaseModel):
 
     @field_validator("team1_player2_id", "team2_player2_id")
     @classmethod
-    def validate_2v2_players(cls, v: Optional[int], values: dict) -> Optional[int]:
-        if "match_type" in values:
-            if values["match_type"] == MatchType.TWO_V_TWO and v is None:
+    def validate_2v2_players(cls, v: Optional[int], info: ValidationInfo) -> Optional[int]:
+        if "match_type" in info.data:
+            if info.data["match_type"] == MatchType.TWO_V_TWO and v is None:
                 raise ValueError("2v2 matches require both players for each team")
-            if values["match_type"] == MatchType.ONE_V_ONE and v is not None:
+            if info.data["match_type"] == MatchType.ONE_V_ONE and v is not None:
                 raise ValueError("1v1 matches should not have second players")
         return v
 
@@ -104,18 +104,18 @@ class MatchCreate(BaseModel):
 
     @field_validator("team1_player2_id", "team2_player2_id")
     @classmethod
-    def validate_2v2_players(cls, v: Optional[int], values: dict) -> Optional[int]:
-        if "match_type" in values:
-            if values["match_type"] == MatchType.TWO_V_TWO and v is None:
+    def validate_2v2_players(cls, v: Optional[int], info: ValidationInfo) -> Optional[int]:
+        if "match_type" in info.data:
+            if info.data["match_type"] == MatchType.TWO_V_TWO and v is None:
                 raise ValueError("2v2 matches require both players for each team")
-            if values["match_type"] == MatchType.ONE_V_ONE and v is not None:
+            if info.data["match_type"] == MatchType.ONE_V_ONE and v is not None:
                 raise ValueError("1v1 matches should not have second players")
         return v
 
     @field_validator("scheduled_date")
     @classmethod
-    def set_scheduled_date(cls, v: Optional[datetime], values: dict) -> datetime:
-        return v or values.get("match_date")
+    def set_scheduled_date(cls, v: Optional[datetime], info: ValidationInfo) -> datetime:
+        return v or info.data.get("match_date")
 
     @field_validator("match_date")
     @classmethod
@@ -126,14 +126,13 @@ class MatchCreate(BaseModel):
 
     @field_validator("status")
     @classmethod
-    def determine_status_from_goals(cls, v: Optional[MatchStatus], values: dict) -> MatchStatus:
+    def determine_status_from_goals(cls, v: Optional[MatchStatus], info: ValidationInfo) -> MatchStatus:
         has_goals = (
-            "team1_goals" in values
-            and "team2_goals" in values
-            and values["team1_goals"] is not None
-            and values["team2_goals"] is not None
+            "team1_goals" in info.data
+            and "team2_goals" in info.data
+            and info.data["team1_goals"] is not None
+            and info.data["team2_goals"] is not None
         )
-
         return MatchStatus.COMPLETED if has_goals else MatchStatus.SCHEDULED
 
     @field_validator("team1_goals", "team2_goals")
