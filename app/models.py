@@ -1,4 +1,4 @@
-from pydantic import BaseModel, validator, Field
+from pydantic import BaseModel, field_validator, Field, ConfigDict
 from typing import Optional
 from datetime import datetime
 from enum import Enum
@@ -38,8 +38,7 @@ class Player(PlayerBase):
     created_at: datetime
     updated_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 # Match models
 class MatchBase(BaseModel):
@@ -52,8 +51,9 @@ class MatchBase(BaseModel):
     match_date: datetime
     scheduled_date: Optional[datetime] = None
     
-    @validator('team1_player2_id', 'team2_player2_id')
-    def validate_2v2_players(cls, v, values):
+    @field_validator('team1_player2_id', 'team2_player2_id')
+    @classmethod
+    def validate_2v2_players(cls, v: Optional[int], values: dict) -> Optional[int]:
         if 'match_type' in values:
             if values['match_type'] == MatchType.TWO_V_TWO and v is None:
                 raise ValueError('2v2 matches require both players for each team')
@@ -69,8 +69,9 @@ class CompletedMatch(MatchBase):
     team2_goals: int
     status: MatchStatus = MatchStatus.COMPLETED
     
-    @validator('team1_goals', 'team2_goals')
-    def validate_goals(cls, v):
+    @field_validator('team1_goals', 'team2_goals')
+    @classmethod
+    def validate_goals(cls, v: int) -> int:
         if v < 0:
             raise ValueError('Goals cannot be negative')
         return v
@@ -86,14 +87,13 @@ class MatchCreate(BaseModel):
     scheduled_date: Optional[datetime] = None
     team1_goals: Optional[int] = None
     team2_goals: Optional[int] = None
-    status: Optional[MatchStatus] = None  # Make status optional and let it be determined by goals
+    status: Optional[MatchStatus] = None
 
-    class Config:
-        # Allow extra fields for flexibility
-        extra = "allow"
+    model_config = ConfigDict(extra='allow')
 
-    @validator('team1_player2_id', 'team2_player2_id')
-    def validate_2v2_players(cls, v, values):
+    @field_validator('team1_player2_id', 'team2_player2_id')
+    @classmethod
+    def validate_2v2_players(cls, v: Optional[int], values: dict) -> Optional[int]:
         if 'match_type' in values:
             if values['match_type'] == MatchType.TWO_V_TWO and v is None:
                 raise ValueError('2v2 matches require both players for each team')
@@ -101,19 +101,21 @@ class MatchCreate(BaseModel):
                 raise ValueError('1v1 matches should not have second players')
         return v
 
-    @validator('scheduled_date')
-    def set_scheduled_date(cls, v, values):
+    @field_validator('scheduled_date')
+    @classmethod
+    def set_scheduled_date(cls, v: Optional[datetime], values: dict) -> datetime:
         return v or values.get('match_date')
 
-    @validator('match_date')
-    def validate_match_date(cls, v):
+    @field_validator('match_date')
+    @classmethod
+    def validate_match_date(cls, v: datetime) -> datetime:
         if v < datetime.now():
             raise ValueError('Match date cannot be in the past')
         return v
 
-    @validator('status', pre=True, always=True)
-    def determine_status_from_goals(cls, v, values):
-        # Determine status based on presence of goals
+    @field_validator('status')
+    @classmethod
+    def determine_status_from_goals(cls, v: Optional[MatchStatus], values: dict) -> MatchStatus:
         has_goals = (
             'team1_goals' in values and 
             'team2_goals' in values and 
@@ -121,27 +123,19 @@ class MatchCreate(BaseModel):
             values['team2_goals'] is not None
         )
         
-        # If both goals are present, match is completed
-        if has_goals:
-            return MatchStatus.COMPLETED
-        
-        # Otherwise, match is scheduled
-        return MatchStatus.SCHEDULED
+        return MatchStatus.COMPLETED if has_goals else MatchStatus.SCHEDULED
 
-    @validator('team1_goals', 'team2_goals')
-    def validate_goals(cls, v):
+    @field_validator('team1_goals', 'team2_goals')
+    @classmethod
+    def validate_goals(cls, v: Optional[int]) -> Optional[int]:
         if v is not None and v < 0:
             raise ValueError('Goals cannot be negative')
         return v
 
     def dict(self, *args, **kwargs):
-        # Get the dictionary representation
         data = super().dict(*args, **kwargs)
-        
-        # Determine status based on goals
         has_goals = data.get('team1_goals') is not None and data.get('team2_goals') is not None
         data['status'] = MatchStatus.COMPLETED if has_goals else MatchStatus.SCHEDULED
-        
         return data
 
 class Match(BaseModel):
@@ -161,8 +155,7 @@ class Match(BaseModel):
     created_at: datetime
     updated_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 # Match Statistics model
 class MatchStats(BaseModel):
@@ -174,16 +167,16 @@ class MatchStats(BaseModel):
     points: int = 0
     created_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 # Update Score model
 class ScoreUpdate(BaseModel):
     team1_goals: int
     team2_goals: int
 
-    @validator('team1_goals', 'team2_goals')
-    def validate_goals(cls, v):
+    @field_validator('team1_goals', 'team2_goals')
+    @classmethod
+    def validate_goals(cls, v: int) -> int:
         if v < 0:
             raise ValueError('Goals cannot be negative')
         return v
