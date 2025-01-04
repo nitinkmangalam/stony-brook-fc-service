@@ -1,5 +1,4 @@
 from datetime import datetime
-from typing import List
 
 import psycopg2
 from database import get_connection
@@ -7,6 +6,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from models import MatchCreate, Player, PlayerCreate, ScoreUpdate
 from psycopg2.extras import RealDictCursor
+from routers import player_router
 
 app = FastAPI()
 
@@ -19,19 +19,21 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Include routers
+app.include_router(player_router.router)
 
-# Player endpoints
-@app.get("/players", response_model=List[Player])
-async def get_players():
-    conn = get_connection()
-    cur = conn.cursor(cursor_factory=RealDictCursor)
-    try:
-        cur.execute("""SELECT * FROM players ORDER BY player_name""")
-        players = cur.fetchall()
-        return players
-    finally:
-        cur.close()
-        conn.close()
+# # Player endpoints
+# @app.get("/players", response_model=List[Player])
+# async def get_players():
+#     conn = get_connection()
+#     cur = conn.cursor(cursor_factory=RealDictCursor)
+#     try:
+#         cur.execute("""SELECT * FROM players ORDER BY player_name""")
+#         players = cur.fetchall()
+#         return players
+#     finally:
+#         cur.close()
+#         conn.close()
 
 
 @app.post("/players", response_model=Player)

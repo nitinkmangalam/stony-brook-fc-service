@@ -1,3 +1,5 @@
+-r requirements.txt  # Include all production dependencies
+
 flake8==6.1.0
 flake8-docstrings==1.7.0
 black==23.7.0
@@ -5,3 +7,6 @@ isort==5.12.0
 pre-commit==3.3.3
 pytest==7.4.0
 pytest-cov==4.1.0
+
+pytest-asyncio==0.21.1  # For testing async endpoints
+httpx==0.24.1  # Required for FastAPI TestClient
