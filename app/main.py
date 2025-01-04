@@ -7,7 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 # from models import MatchCreate, Player, PlayerCreate, ScoreUpdate
 from psycopg2.extras import RealDictCursor
-from routers import match_router, player_router
+from routers import match_router, player_router, standing_router
 
 app = FastAPI()
 
@@ -23,6 +23,7 @@ app.add_middleware(
 # Include routers
 app.include_router(player_router.router)
 app.include_router(match_router.router)
+app.include_router(standing_router.router)
 
 # # Player endpoints
 # @app.get("/players", response_model=List[Player])
