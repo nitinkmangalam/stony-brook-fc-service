@@ -1,7 +1,8 @@
 from typing import Dict
 
 from fastapi import APIRouter, Depends
-from services.overview_service import OverviewService
+
+from app.services.overview_service import OverviewService
 
 router = APIRouter(prefix="/overview", tags=["overview"])
 

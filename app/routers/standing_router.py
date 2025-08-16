@@ -1,5 +1,6 @@
 from fastapi import APIRouter, HTTPException
-from services.standing_service import StandingService
+
+from app.services.standing_service import StandingService
 
 router = APIRouter(prefix="/standings", tags=["standings"])
 

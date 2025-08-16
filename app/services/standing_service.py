@@ -1,6 +1,6 @@
 from typing import Dict, List
 
-from repositories.standing_repository import StandingRepository
+from app.repositories.standing_repository import StandingRepository
 
 
 class StandingService:

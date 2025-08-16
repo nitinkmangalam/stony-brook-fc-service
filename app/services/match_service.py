@@ -1,7 +1,8 @@
 from datetime import datetime
 
 from models import MatchCreate, ScoreUpdate
-from repositories.match_repository import MatchRepository
+
+from app.repositories.match_repository import MatchRepository
 
 
 class MatchService:

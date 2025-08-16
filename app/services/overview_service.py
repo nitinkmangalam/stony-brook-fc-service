@@ -1,7 +1,8 @@
 from typing import Dict, Optional
 
 from fastapi import HTTPException
-from repositories.overview_repository import OverviewRepository
+
+from app.repositories.overview_repository import OverviewRepository
 
 
 class OverviewService:

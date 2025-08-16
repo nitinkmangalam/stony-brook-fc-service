@@ -2,7 +2,8 @@ from typing import List
 
 from fastapi import APIRouter, Depends
 from models import Player, PlayerCreate
-from services.player_service import PlayerService
+
+from app.services.player_service import PlayerService
 
 router = APIRouter(prefix="/players", tags=["players"])
 
