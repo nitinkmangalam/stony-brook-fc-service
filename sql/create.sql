@@ -2,14 +2,6 @@
 CREATE TABLE players (
     player_id SERIAL PRIMARY KEY,
     player_name VARCHAR(100) NOT NULL,
-    -- matches_played INT DEFAULT 0,
-    -- wins INT DEFAULT 0,
-    -- draws INT DEFAULT 0,
-    -- losses INT DEFAULT 0,
-    -- goals_scored INT DEFAULT 0,
-    -- goals_against INT DEFAULT 0,
-    -- goal_difference INT GENERATED ALWAYS AS (goals_scored - goals_against) STORED,
-    -- clean_sheets INT DEFAULT 0,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -78,28 +70,28 @@ BEGIN
         -- Team 1 player 1
         INSERT INTO match_stats (match_id, player_id, goals, clean_sheet, points)
         VALUES (
-            NEW.id, 
-            NEW.team1_player1_id, 
+            NEW.id,
+            NEW.team1_player1_id,
             NEW.team1_goals,
             CASE WHEN NEW.team2_goals = 0 THEN TRUE ELSE FALSE END,
-            CASE 
-                WHEN NEW.team1_goals > NEW.team2_goals THEN 6 
+            CASE
+                WHEN NEW.team1_goals > NEW.team2_goals THEN 6
                 WHEN NEW.team1_goals = NEW.team2_goals THEN 2
-                ELSE 0 
+                ELSE 0
             END
         );
 
         -- Team 2 player 1
         INSERT INTO match_stats (match_id, player_id, goals, clean_sheet, points)
         VALUES (
-            NEW.id, 
-            NEW.team2_player1_id, 
+            NEW.id,
+            NEW.team2_player1_id,
             NEW.team2_goals,
             CASE WHEN NEW.team1_goals = 0 THEN TRUE ELSE FALSE END,
-            CASE 
+            CASE
                 WHEN NEW.team2_goals > NEW.team1_goals THEN 6
                 WHEN NEW.team2_goals = NEW.team1_goals THEN 2
-                ELSE 0 
+                ELSE 0
             END
         );
     END IF;
