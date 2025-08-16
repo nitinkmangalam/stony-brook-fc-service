@@ -4,8 +4,9 @@ from unittest.mock import Mock, patch
 import pytest
 from fastapi import FastAPI, HTTPException
 from fastapi.testclient import TestClient
-from models import Player, PlayerCreate
-from routers.player_router import router
+
+from app.models import Player, PlayerCreate
+from app.routers.player_router import router
 
 # Setup test app
 app = FastAPI()

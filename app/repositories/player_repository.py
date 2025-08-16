@@ -1,8 +1,9 @@
 from typing import List, Optional
 
-from database import get_connection
-from models import PlayerCreate
 from psycopg2.extras import RealDictCursor
+
+from app.database import get_connection
+from app.models import PlayerCreate
 
 
 class PlayerRepository:

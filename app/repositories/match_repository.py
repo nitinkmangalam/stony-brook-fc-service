@@ -1,8 +1,9 @@
 from typing import Optional
 
-from database import get_connection
-from models import MatchCreate
 from psycopg2.extras import RealDictCursor
+
+from app.database import get_connection
+from app.models import MatchCreate
 
 
 class MatchRepository:

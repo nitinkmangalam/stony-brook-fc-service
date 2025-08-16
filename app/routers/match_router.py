@@ -1,8 +1,8 @@
 from typing import List
 
 from fastapi import APIRouter, Depends
-from models import Match, MatchCreate, ScoreUpdate
 
+from app.models import Match, MatchCreate, ScoreUpdate
 from app.services.match_service import MatchService
 
 router = APIRouter(prefix="/matches", tags=["matches"])

@@ -1,7 +1,8 @@
 from typing import Dict, List
 
-from database import get_connection
 from psycopg2.extras import RealDictCursor
+
+from app.database import get_connection
 
 
 class StandingRepository:

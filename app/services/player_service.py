@@ -1,8 +1,8 @@
 from typing import List
 
 from fastapi import HTTPException
-from models import Player, PlayerCreate
 
+from app.models import Player, PlayerCreate
 from app.repositories.player_repository import PlayerRepository
 
 
